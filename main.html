@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Personal Diary 📖</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f5f5f4; /* สีพื้นหลังแนวกระดาษถนอมสายตา */
+            color: #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 { color: #78716c; margin-bottom: 5px; font-size: 2em; }
+        p { color: #a8a29e; margin-top: 0; }
+        
+        .diary-form {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+        input[type="date"] {
+            font-family: 'Kanit', sans-serif;
+            padding: 10px;
+            border: 1px solid #d6d3d1;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            width: 100%;
+            box-sizing: border-box;
+            color: #57534e;
+        }
+        textarea {
+            font-family: 'Kanit', sans-serif;
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #d6d3d1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            height: 120px;
+            resize: none;
+            margin-bottom: 15px;
+            font-size: 1em;
+            outline: none;
+        }
+        textarea:focus { border-color: #a8a29e; }
+        button {
+            background-color: #a8a29e;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1em;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        button:hover { background-color: #78716c; }
+
+        .entries-container {
+            width: 100%;
+            max-width: 500px;
+        }
+        .entry-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            border-left: 5px solid #d6d3d1;
+            position: relative;
+        }
+        .entry-date {
+            font-weight: 500;
+            color: #78716c;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            border-bottom: 1px dashed #e7e5e4;
+            padding-bottom: 5px;
+        }
+        .entry-text {
+            line-height: 1.6;
+            white-space: pre-wrap; /* ทำให้ขึ้นบรรทัดใหม่ตามที่พิมพ์ */
+        }
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #fecdd3;
+            color: #be123c;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            cursor: pointer;
+            width: auto;
+        }
+        .delete-btn:hover { background: #fda4af; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>📖 My Diary</h2>
+        <p>บันทึกเรื่องราวในแต่ละวันของคุณ</p>
+    </div>
+
+    <!-- ส่วนสำหรับเขียนไดอะรี่ -->
+    <div class="diary-form">
+        <input type="date" id="diaryDate">
+        <textarea id="diaryText" placeholder="วันนี้เจอเรื่องอะไรมาบ้าง? เล่าให้ฟังหน่อย..."></textarea>
+        <button onclick="saveEntry()">บันทึกความทรงจำ</button>
+    </div>
+
+    <!-- ส่วนสำหรับแสดงไดอะรี่ที่เคยเขียนไว้ -->
+    <div class="entries-container" id="entriesContainer">
+        <!-- ข้อมูลจะถูกนำมาแสดงตรงนี้อัตโนมัติ -->
+    </div>
+
+    <script>
+        // เซ็ตค่าเริ่มต้นของช่องวันที่ ให้เป็นวันปัจจุบัน
+        document.getElementById('diaryDate').valueAsDate = new Date();
+
+        // ฟังก์ชันดึงข้อมูลจาก localStorage มาแสดงผล
+        function loadEntries() {
+            const container = document.getElementById('entriesContainer');
+            container.innerHTML = ''; // ล้างหน้าจอเก่าก่อน
+            
+            // ดึงข้อมูล ถ้าไม่มีให้เป็น Array ว่าง []
+            const entries = JSON.parse(localStorage.getItem('myDiaryEntries')) || [];
+
+            if (entries.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#a8a29e;">ยังไม่มีบันทึกเลย ลองเขียนดูสิ!</p>';
+                return;
+            }
+
+            // นำข้อมูลมาสร้างกล่องข้อความทีละอัน
+            entries.forEach((entry, index) => {
+                const card = document.createElement('div');
+                card.className = 'entry-card';
+
+                // แปลงรูปแบบวันที่ให้อ่านง่าย
+                const dateObj = new Date(entry.date);
+                const formattedDate = dateObj.toLocaleDateString('th-TH', { 
+                    year: 'numeric', month: 'long', day: 'numeric' 
+                });
+
+                card.innerHTML = `
+                    <button class="delete-btn" onclick="deleteEntry(${index})">ลบ</button>
+                    <div class="entry-date">📅 ${formattedDate}</div>
+                    <div class="entry-text">${entry.text}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ฟังก์ชันบันทึกไดอะรี่
+        function saveEntry() {
+            const dateInput = document.getElementById('diaryDate').value;
+            const textInput = document.getElementById('diaryText').value.trim();
+
+            if (textInput === "") {
+                alert("พิมพ์เรื่องราวของวันนี้ก่อนกดบันทึกนะ!");
+                return;
+            }
+
+            // โหลดข้อมูลเก่ามาก่อน
+            const entries = JSON.parse(localStorage.getItem('myDiaryEntries')) || [];
+            
+            // เพิ่มข้อมูลใหม่เข้าไปข้างหน้าสุด (เรื่องใหม่สุดอยู่บน)
+            entries.unshift({
+                date: dateInput,
+                text: textInput
+            });
+
+            // บันทึกกลับลงเครื่อง
+            localStorage.setItem('myDiaryEntries', JSON.stringify(entries));
+
+            // เคลียร์ช่องพิมพ์ และโหลดข้อมูลใหม่มาแสดง
+            document.getElementById('diaryText').value = '';
+            loadEntries();
+        }
+
+        // ฟังก์ชันลบบันทึก
+        function deleteEntry(index) {
+            if(confirm("แน่ใจนะว่าต้องการลบบันทึกของวันนี้?")) {
+                const entries = JSON.parse(localStorage.getItem('myDiaryEntries')) || [];
+                entries.splice(index, 1); // ลบข้อมูลตามตำแหน่งที่กด
+                localStorage.setItem('myDiaryEntries', JSON.stringify(entries));
+                loadEntries(); // โหลดหน้าจอใหม่
+            }
+        }
+
+        // เรียกใช้ฟังก์ชันโหลดข้อมูลทันทีที่เปิดหน้าเว็บ
+        loadEntries();
+    </script>
+
+</body>
+</html>
